@@ -1,0 +1,40 @@
+version: 0.2
+
+# Set environment variables
+env:
+  variables:
+    AWS_REGION: "us-east-2"   # your AWS region
+    REPOSITORY_URI: "941914179834.dkr.ecr.us-east-2.amazonaws.com/node-docker-app" # your ECR repo URI
+
+# Enable Docker builds
+phases:
+  install:
+    runtime-versions:
+      docker: 24
+    commands:
+      - echo Installing dependencies (if any)...
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - echo IMAGE_TAG=$IMAGE_TAG
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
+  post_build:
+    commands:
+      - echo Pushing Docker images...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:latest
+      - echo Writing imagedefinitions.json for ECS deployment...
+      - printf '[{"name":"node-docker-app","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
+# Artifacts for CodePipeline
+artifacts:
+  files:
+    - imagedefinitions.json
