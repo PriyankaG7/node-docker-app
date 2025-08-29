@@ -9,8 +9,6 @@ env:
 # Enable Docker builds
 phases:
   install:
-    runtime-versions:
-      docker: 24
     commands:
       - echo Installing dependencies (if any)...
   pre_build:
