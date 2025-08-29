@@ -33,6 +33,6 @@ phases:
       - printf '[{"name":"node-docker-app","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 # Artifacts for CodePipeline
-artifacts:
-  files:
-    - imagedefinitions.json
+  artifacts:
+    files:
+      - imagedefinitions.json
