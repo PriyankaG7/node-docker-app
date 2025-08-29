@@ -1,0 +1,11 @@
+# Node.js dependencies
+node_modules/
+
+# Vim swap files
+*.swp
+
+# SonarQube analysis
+.scannerwork/
+
+# ECS CloudFormation swap files
+ecs-infra.yml.swp
