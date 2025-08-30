@@ -1,40 +1,36 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: ECS Fargate Cluster with ALB, Service, TaskDef, ECR, and IAM roles
+Description: ECS Fargate Cluster with ALB, Service, TaskDef, and IAM roles for Node.js app
 
 Parameters:
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC to launch ECS into
-    Default: vpc-099c6f094c2c54e5f
+    Default: "vpc-099c6f094c2c54e5f"
   Subnets:
     Type: List<AWS::EC2::Subnet::Id>
     Description: Subnets for ECS and ALB
-    Default:
-      - subnet-057a2665f733ae525
-      - subnet-0e2f91024a60ce667
+    Default: "subnet-057a2665f733ae525,subnet-0e2f91024a60ce667"
   AppName:
     Type: String
-    Default: node-docker-app
+    Default: "node-docker-app"
+  EcrRepositoryName:
+    Type: String
+    Description: Existing ECR repository name
+    Default: "node-docker-app"
 
 Resources:
-
-  ### ECR Repo
-  ECRRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: !Ref AppName
 
   ### ECS Cluster
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Ref AppName
+      ClusterName: !Sub "${AppName}-cluster-${AWS::StackName}"
 
   ### Task Execution Role
   TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${AppName}-task-exec-role
+      RoleName: !Sub "${AppName}-exec-role-${AWS::StackName}"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -49,7 +45,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Ref AppName
+      Family: !Sub "${AppName}-family-${AWS::StackName}"
       Cpu: 256
       Memory: 512
       NetworkMode: awsvpc
@@ -57,8 +53,8 @@ Resources:
         - FARGATE
       ExecutionRoleArn: !Ref TaskExecutionRole
       ContainerDefinitions:
-        - Name: !Ref AppName
-          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AppName}:latest"
+        - Name: !Sub "${AppName}-ctr"
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}:latest"
           PortMappings:
             - ContainerPort: 3000
           Essential: true
@@ -67,7 +63,7 @@ Resources:
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow HTTP
+      GroupDescription: !Sub "${AppName}-alb-sg-${AWS::StackName}"
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -79,7 +75,7 @@ Resources:
   ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: ECS service SG
+      GroupDescription: !Sub "${AppName}-ecs-sg-${AWS::StackName}"
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -91,17 +87,18 @@ Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub ${AppName}-alb
+      Name: !Sub "${AppName}-alb"
       Subnets: !Ref Subnets
       SecurityGroups:
         - !Ref ALBSecurityGroup
       Scheme: internet-facing
       Type: application
 
-  ### Target Group
+  ### Target Group (shortened name to avoid 32-char limit)
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
+      Name: !Sub "${AppName}-tg"
       VpcId: !Ref VpcId
       Port: 3000
       Protocol: HTTP
@@ -124,6 +121,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: Listener
     Properties:
+      ServiceName: !Sub "${AppName}-svc-${AWS::StackName}"
       Cluster: !Ref ECSCluster
       DesiredCount: 1
       LaunchType: FARGATE
@@ -135,7 +133,7 @@ Resources:
           SecurityGroups:
             - !Ref ECSSecurityGroup
       LoadBalancers:
-        - ContainerName: !Ref AppName
+        - ContainerName: !Sub "${AppName}-ctr"
           ContainerPort: 3000
           TargetGroupArn: !Ref TargetGroup
 
