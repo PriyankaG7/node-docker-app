@@ -53,7 +53,7 @@ Resources:
         - FARGATE
       ExecutionRoleArn: !Ref TaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub "${AppName}-ctr"
+        - Name: "node-docker-app-ctr"
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepositoryName}:latest"
           PortMappings:
             - ContainerPort: 3000
@@ -133,7 +133,7 @@ Resources:
           SecurityGroups:
             - !Ref ECSSecurityGroup
       LoadBalancers:
-        - ContainerName: !Sub "${AppName}-ctr"
+        - ContainerName: "node-docker-app-ctr"
           ContainerPort: 3000
           TargetGroupArn: !Ref TargetGroup
 
