@@ -30,8 +30,7 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
       - echo Writing imagedefinitions.json for ECS deployment...
-      #- printf '[{"name":"%s","imageUri":"%s"}]' "${AppName}-ctr" $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
-      -  printf '[{"name":"node-docker-app-ctr","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"node-docker-app-ctr","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files:
