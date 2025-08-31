@@ -7,7 +7,7 @@
   "executionRoleArn": "arn:aws:iam::941914179834:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
-      "name": "node-docker-app",
+      "name": "node-docker-app-ctr",
       "image": "941914179834.dkr.ecr.us-east-2.amazonaws.com/node-docker-app:latest",
       "portMappings": [{"containerPort":3000,"protocol":"tcp"}],
       "essential": true,
