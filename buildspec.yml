@@ -36,6 +36,3 @@ phases:
 artifacts:
   files:
     - imagedefinitions.json
-  discard-paths: yes
-  base-directory: .
-  name: node-docker-app/imagedefinitions.json
