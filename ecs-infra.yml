@@ -24,13 +24,13 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub "${AppName}-cluster-${AWS::StackName}"
+      ClusterName: !Sub "${AppName}-cluster"
 
   ### Task Execution Role
   TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${AppName}-exec-role-${AWS::StackName}"
+      RoleName: !Sub "${AppName}-exec-role"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -45,7 +45,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub "${AppName}-family-${AWS::StackName}"
+      Family: !Sub "${AppName}-family"
       Cpu: 256
       Memory: 512
       NetworkMode: awsvpc
@@ -63,7 +63,7 @@ Resources:
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Sub "${AppName}-alb-sg-${AWS::StackName}"
+      GroupDescription: !Sub "${AppName}-alb-sg"
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -75,7 +75,7 @@ Resources:
   ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: !Sub "${AppName}-ecs-sg-${AWS::StackName}"
+      GroupDescription: !Sub "${AppName}-ecs-sg"
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -121,7 +121,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: Listener
     Properties:
-      ServiceName: !Sub "${AppName}-svc-${AWS::StackName}"
+      ServiceName: !Sub "${AppName}-svc"
       Cluster: !Ref ECSCluster
       DesiredCount: 1
       LaunchType: FARGATE

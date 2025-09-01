@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CodePipeline for Node.js Docker App with ECS Fargate Deploy
+
+Parameters:
+  GitHubRepo:
+    Type: String
+    Default: "node-docker-app"
+  GitHubBranch:
+    Type: String
+    Default: "main"
+  GitHubUser:
+    Type: String
+    Default: "PriyankaG7"
+
+  ArtifactBucket:
+    Type: String
+    Description: S3 bucket for storing pipeline artifacts
+    Default: "my-cloudformationtemplate-bucket7"
+  ClusterName:
+    Type: String
+    Default: "node-docker-app-cluster"
+  ServiceName:
+    Type: String
+    Default: "node-docker-app-svc"
+  BuildProjectName:
+    Type: String
+    Default: "node-docker-app-build"
+  CodeStarConnectionArn:
+    Type: String
+    Description: ARN of the CodeStar connection to GitHub
+    Default: "arn:aws:codeconnections:us-east-2:941914179834:connection/6279523d-3f7b-4143-ae68-16e797ec914d"
+
+Resources:
+  ### CodeBuild Project
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref BuildProjectName
+      ServiceRole: arn:aws:iam::941914179834:role/service-role/codebuild-node-docker-app-service-role # replace with actual IAM role for CodeBuild
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        PrivilegedMode: true   # required for Docker builds
+        Image: aws/codebuild/standard:7.0
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 30
+
+  ### CodePipeline
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: "node-docker-app-pipeline"
+      RoleArn: arn:aws:iam::941914179834:role/service-role/codebuild-node-docker-app-service-role  # replace with CodePipeline IAM role
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: "1"
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                ConnectionArn: !Ref CodeStarConnectionArn
+                FullRepositoryId: !Sub "${GitHubUser}/${GitHubRepo}"
+                BranchName: !Ref GitHubBranch
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+        - Name: Deploy
+          Actions:
+            - Name: DeployAction
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: ECS
+                Version: "1"
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ClusterName: !Ref ClusterName
+                ServiceName: !Ref ServiceName
+                FileName: imagedefinitions.json
