@@ -30,9 +30,10 @@ phases:
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
       - echo Writing imagedefinitions.json for ECS deployment...
-      - echo '[{"name":"node-docker-app-ctr","imageUri":"'"$REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION"'"}]' > imagedefinitions.json
+      - printf '[{"name":"node-docker-app-ctr","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
 
 
 artifacts:
   files:
     - imagedefinitions.json
+  discard-paths: yes
